@@ -214,6 +214,9 @@ export default {
       });
     },
     'createOrder.routerDetailSeries'() {
+        if(this.createOrder.routerDetailSeries===''){
+            return;
+        }
       this._getCustomerRouterDetail({
         customerNumId: this.customerNumId,
         routerDetailSeries: this.createOrder.routerDetailSeries,
@@ -303,6 +306,9 @@ export default {
       this.createOrder.customerMasterId = item.customerMasterId;
     },
     querySearchAsyncRouter(qs, cb) {
+      if(qs=''){
+          return;
+      }
       let routerDetails = this.routerDetails;
       var results = qs
         ? routerDetails.filter(this.createStateFilterRouter(qs))
@@ -363,6 +369,10 @@ export default {
               .then(res => {
                   if (res.code === 0) {
                       this.carSizes = res.carSizes;
+                      if(this.createOrder.carSizeSeries==null||this.createOrder.carSizeSeries==''){
+                          this.createOrder.carSizeSeries=this.carSizes[0].sizeId;
+                      }
+
                   }
               })
               .catch(err => {
@@ -374,6 +384,9 @@ export default {
               .then(res => {
                   if (res.code === 0) {
                       this.carTypes = res.carTypes;
+                      if(this.createOrder.carTypeSeries==null||this.createOrder.carTypeSeries==''){
+                          this.createOrder.carTypeSeries=this.carTypes[0].typeId;
+                      }
                   }
               })
               .catch(err => {
@@ -423,6 +436,10 @@ export default {
           if (res.code === 0) {
             this.carAndPriceModels = res.carAndPriceModels;
             this.carDetailModels = res.carAndPriceModels;
+            if(this.carWeight==null||this.carWeight==''){
+                this.carWeight=this.carDetailModels[0].weightName;
+            }
+
           }
         })
         .catch(err => {
