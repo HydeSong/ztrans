@@ -7,7 +7,7 @@
     size="mini"
     style="margin-bottom: -18px;">
 
-    <el-form-item label="客户名字">
+    <el-form-item label="客户名字" prop="customerName">
       <el-autocomplete v-model="form.customerName"
                        placeholder="客户名字"
                        clearable
@@ -16,7 +16,7 @@
       </el-autocomplete>
     </el-form-item>
 
-    <el-form-item label="线路名称">
+    <el-form-item label="线路名称" prop="routerAliaName">
       <el-autocomplete v-model="form.routerAliaName"
                        placeholder="线路名称"
                        clearable
@@ -26,11 +26,36 @@
     </el-form-item>
 
 
-    <el-form-item label="司机姓名">
-      <el-input
-              v-model="form.driverName"
-              placeholder="请输入"
-              style="width: 100px;"/>
+    <el-form-item label="司机姓名" prop="driverName">
+      <!--<el-input-->
+              <!--v-model="form.driverName"-->
+              <!--placeholder="请输入"-->
+              <!--style="width: 100px;"/>-->
+      <el-autocomplete v-model="form.driverName"
+                       placeholder="请输入"
+                       clearable
+                       :fetch-suggestions="querySearchAsyncDriver"
+                       @select="handleSelectRouter">
+      </el-autocomplete>
+    </el-form-item>
+
+    <el-form-item label="车牌号" prop="carPlateNumber">
+      <!--<el-input-->
+      <!--v-model="form.platenumberSearchKey"-->
+      <!--placeholder="请输入"-->
+      <!--style="width: 150px;"/>-->
+      <el-autocomplete v-model="form.carPlateNumber"
+                       placeholder="车牌号"
+                       clearable
+                       :fetch-suggestions="querySearchAsyncDriverPlate"
+                       @select="handleSelectRouter">
+      </el-autocomplete>
+    </el-form-item>
+
+    <el-form-item label="任务状态" prop="taskType">
+      <el-select v-model="form.taskType" placeholder="请选择" clearable>
+      <el-option v-for="(item, index) in taskTypeModels" :key="index" :label="item.taskTypeName" :value="item.taskTypeId"></el-option>
+      </el-select>
     </el-form-item>
 
     <el-form-item label="指派日期" prop="registerTime">
@@ -82,15 +107,20 @@
 import util from '@/libs/util';
 import {getRouterAliaList,getRouterAliaSearchList} from '@/api/schedule';
 import {getCarTypeList} from '@/api/order';
-import {getOrderType} from '@/api/dictionary';
+import {getOrderType,getTaskType} from '@/api/dictionary';
+import {getDriverBySearchKey,getDriverByPlateNumberSearchKey} from '@/api/truck';
 import {
     getMasterCustomerListBySearchKey
 } from '@/api/createorder';
 export default {
   data() {
     return {
+      driverNames:[],
+      driverPlateNumber: [],
+      customerSeries:'',
       routerDetail: [],
       customerMaster: [],
+      taskTypeModels:[],
       masterCustomerSearchKey: {
             customerMasterSearchKey: '',
             customerNumId: '',
@@ -101,8 +131,10 @@ export default {
         customerName: '',
         routerAliaName: '',
         driverName: '',
+        carPlateNumber:'',
         startTime: '',
         endTime: '',
+        taskType: '',
       },
       rules: {},
         pickerOptions: {
@@ -144,11 +176,72 @@ export default {
           customerSeries: '',
           routerSearchKey: '',
       });
+      this._getDriverNameList({
+          customerNumId: this.form.customerNumId,
+      });
+      this._getTaskType({
+          customerNumId: this.form.customerNumId,
+      });
   },
+    watch: {
+        'registerTime'() {
+            if(this.registerTime==''||this.registerTime==null){
+                this.form.startTime = '';
+                this.form.endTime = '';
+            }
+        },
+        'form.customerName'() {
+            if(this.form.customerName==''||this.form.customerName==null){
+                this.customerSeries='';
+            }
+            this._getRouterAliaSearchList({
+                customerNumId: this.customerNumId,
+                customerSeries: this.customerSeries,
+                routerSearchKey: ''
+            });
+        }
+    },
   methods: {
+      _getTaskType(params) {
+          getTaskType(params)
+              .then(res => {
+                  if (res.code === 0) {
+                      this.taskTypeModels = res.taskTypeModels;
+                  }
+              })
+              .catch(err => {
+                  console.log(err);
+              });
+      },
       onRegisterTimeChange(time) {
           this.form.startTime = time[0];
           this.form.endTime = time[1];
+      },
+      _getDriverNameList(params) {
+          getDriverBySearchKey(params)
+              .then(res => {
+                  if (res.code === 0) {
+                      let driverNames = [];
+                      res.customerDrivers.forEach(item => {
+                          driverNames.push({
+                              value: item.driverName,
+                              ...item,
+                          });
+                      });
+                      let driverPlatNames = [];
+                      res.customerDrivers.forEach(item => {
+                          driverPlatNames.push({
+                              value: item.carPlateNumber,
+                              ...item,
+                          });
+                      });
+                      this.driverNames = driverNames;
+                      this.driverPlateNumber = driverPlatNames;
+                  }
+              })
+              .catch(err => {
+                  console.log(err);
+              });
       },
       _getRouterAliaSearchList(params) {
           getRouterAliaSearchList(params)
@@ -214,6 +307,7 @@ export default {
 
       },
       handleSelect(item) {
+          this.customerSeries = item.customerMasterId;
       },
       querySearchAsync(qs, cb) {
           this.masterCustomerSearchKey.customerMasterSearchKey = qs;
@@ -243,6 +337,20 @@ export default {
           return state => {
               return state.value.toLowerCase().indexOf(qs.toLowerCase()) != -1;
           };
+      },
+      querySearchAsyncDriver(qs, cb) {
+          let driverNames = this.driverNames;
+          var results = qs
+              ? driverNames.filter(this.createStateFilter(qs))
+              : driverNames;
+          cb(results);
+      },
+      querySearchAsyncDriverPlate(qs, cb) {
+          let driverPlateNumber = this.driverPlateNumber;
+          var results = qs
+              ? driverPlateNumber.filter(this.createStateFilterRouter(qs))
+              : driverPlateNumber;
+          cb(results);
       },
     handleFormReset() {
       this.$refs.form.resetFields();

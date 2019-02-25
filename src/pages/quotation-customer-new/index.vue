@@ -4,6 +4,7 @@
       slot="header"
       @submit="handleSubmit"
       @add="handleAdd"
+      @downLoadExcel="downLoadExcel"
       ref="header"/>
     <page-main
       :table-data="table"
@@ -521,7 +522,8 @@
         deleteRouterCustomerPrice,
         updateBatchRouterPrice,
         updateRouterCustomerPrice,
-        getConsumerRouterPriceByRouterId
+        getConsumerRouterPriceByRouterId,
+        downloadRouterPriceExcel
     } from "@/api/price";
     import {
         getAllPrv,
@@ -702,10 +704,6 @@ export default {
       this.handleSubmit();
     },
     handlePaginationChange(val) {
-      this.$notify({
-        title: "分页变化",
-        message: `当前第${val.current}页 共${val.total}条 每页${val.size}条`
-      });
       this.page = val;
       // nextTick 只是为了优化示例中 notify 的显示
       this.$nextTick(() => {
@@ -1276,6 +1274,14 @@ export default {
           this.priceSetAddItem0 = this.priceSetAddList[index - 1];
           this.priceSetAddItem1 = this.priceSetAddList[index];
           // .log(this.addItem.children)
+      },
+      downLoadExcel(form) {
+          this.loading = true;
+          var url=downloadRouterPriceExcel({
+              customerNumId: util.cookies.get('__user__customernumid'),
+          });
+          window.location.href =url;
+          this.loading = false;
       },
       onEditPriceConfirm(index) {
           this.innerEditVisible = false;

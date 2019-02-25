@@ -38,17 +38,10 @@ if (superId == '1') {
             icon: 'file-text',
             children: [
                 { path: '/vehicle-assign', title: '指派车辆', icon: 'truck' },
-                { path: '/order-management/1', title: '未接单订单', icon: 'file-text' },
-                { path: '/order-management/2', title: '未完成订单', icon: 'file-text' },
-                { path: '/order-management/3', title: '已完成订单', icon: 'file-text' },
-                { path: '/order-management/4', title: '异常订单', icon: 'file-text' }
-            ]
-        },
-        {
-            title: '整月派单',
-            icon: 'flag',
-            children: [
-                { path: '/vehicle-assign-month', title: '整月派单', icon: 'flag' }
+                { path: '/order-management1/1', title: '未接单订单', icon: 'file-text' },
+                { path: '/order-management2/2', title: '未完成订单', icon: 'file-text' },
+                { path: '/order-management3/3', title: '已完成订单', icon: 'file-text' },
+                { path: '/order-management4/4', title: '异常订单', icon: 'file-text' }
             ]
         },
         {
@@ -81,9 +74,9 @@ if (superId == '1') {
             title: '订单费用管理',
             icon: 'money',
             children: [
-                { path: '/cost-management/1', title: '订单完整费用', icon: 'money' },
-                { path: '/cost-management/2', title: '司机费用', icon: 'money' },
-                { path: '/cost-management/3', title: '客户费用', icon: 'money' }
+                { path: '/cost-management1/1', title: '订单完整费用', icon: 'money' },
+                { path: '/cost-management2/2', title: '司机费用', icon: 'money' },
+                { path: '/cost-management3/3', title: '客户费用', icon: 'money' }
             ]
         },
         {
@@ -104,7 +97,8 @@ if (superId == '1') {
             title: '手动下单',
             icon: 'ticket',
             children: [
-                { path: '/order-create', title: '手动下单', icon: 'ticket' }
+                { path: '/order-create', title: '手动下单', icon: 'ticket' },
+                { path: '/vehicle-assign-month', title: '整月下单', icon: 'flag' }
             ]
         },
         {

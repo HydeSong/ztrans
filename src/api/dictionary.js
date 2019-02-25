@@ -463,3 +463,29 @@ export function getCommondStatus (params) {
 
     return httpGet(url, data)
 }
+
+export function getOrderBalanceStatus (params) {
+    const url = `getOrderBalanceStatus`
+    const ts = timestamp()
+    const data = {
+        sid: sid(),
+        timestamp: ts,
+        params: paramsify(params),
+        sign: signify(params, ts)
+    }
+
+    return httpGet(url, data)
+}
+
+export function getTaskType (params) {
+    const url = `getTaskType`
+    const ts = timestamp()
+    const data = {
+        sid: sid(),
+        timestamp: ts,
+        params: paramsify(params),
+        sign: signify(params, ts)
+    }
+
+    return httpGet(url, data)
+}

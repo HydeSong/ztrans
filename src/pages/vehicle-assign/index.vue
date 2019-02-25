@@ -19,10 +19,22 @@
     <el-dialog title="选择车辆" :visible.sync="addDialog">
       <el-form :inline="true" :model="searchItemPop" size="mini">
         <el-form-item>
-          <el-input v-model="searchItemPop.carPlateNumberSearchKey" placeholder="车牌号" style="width: 100px;"></el-input>
+          <!--<el-input v-model="searchItemPop.carPlateNumberSearchKey" placeholder="车牌号" style="width: 100px;"></el-input>-->
+          <el-autocomplete v-model="searchItemPop.carPlateNumberSearchKey"
+                           placeholder="车牌号"
+                           clearable
+                           :fetch-suggestions="querySearchAsyncDriverPlate"
+                           @select="handleSelect">
+          </el-autocomplete>
         </el-form-item>
         <el-form-item>
-          <el-input v-model="searchItemPop.driverNameSearchKey" placeholder="司机姓名" style="width: 100px;"></el-input>
+          <!--<el-input v-model="searchItemPop.driverNameSearchKey" placeholder="司机姓名" style="width: 100px;"></el-input>-->
+          <el-autocomplete v-model="searchItemPop.driverNameSearchKey"
+                           placeholder="司机姓名"
+                           clearable
+                           :fetch-suggestions="querySearchAsyncDriver"
+                           @select="handleSelect">
+          </el-autocomplete>
         </el-form-item>
         <el-form-item>
           <el-select v-model="searchItemPop.carTypeSeries" placeholder="车型" clearable style="width: 135px;">
@@ -70,7 +82,7 @@
         </el-table-column>
         <el-table-column
                 prop="cityName"
-                label="起始地->目的地">
+                label="起始地->目的地"  width="200">
         </el-table-column>
         <el-table-column
                 fixed="right"
@@ -83,27 +95,43 @@
       </el-table>
     </el-dialog>
 
-    <el-dialog title="已接单明细" :visible.sync="orderDetailDialog">
-      <div class="block" style="text-align: left">
-        <el-row>
-          <el-col :span="24">
-            <ul class="i-list">
-              <li>车牌号：{{orderDetail.carPlateNumber}}</li>
-              <li>车辆报价：{{orderDetail.carMoney}}元</li>
-              <li>
-                <el-form :inline="true" :model="orderDetail" size="mini">
-                  <el-form-item label="接单价" class="order-price">
-                    <el-input v-model="orderDetail.carRealMoney" placeholder="请输入"></el-input>
-                  </el-form-item>
-                </el-form>
-              </li>
-            </ul>
-          </el-col>
-        </el-row>
-      </div>
-      <div class="block" style="text-align: left; padding: 15px">
-        已接单任务
-      </div>
+    <el-dialog  :visible.sync="orderDetailDialog">
+      <template>
+        <div class="header">已接单明细</div>
+        <el-form :inline="true" size="mini" label-width="110px">
+          <el-form-item label="车牌号">
+            <el-input v-model="orderDetail.carPlateNumber" disabled></el-input>
+          </el-form-item>
+          <el-form-item label="车辆报价" >
+            <el-input v-model="orderDetail.carMoney" disabled></el-input>
+          </el-form-item>
+        </el-form>
+        <el-form :inline="true" size="mini" label-width="110px">
+          <el-form-item label="接单价">
+            <el-input v-model="orderDetail.carRealMoney" placeholder="请输入"></el-input>
+          </el-form-item>
+        </el-form>
+      <!--<div class="block" style="text-align: left">-->
+        <!--<el-row>-->
+          <!--<el-col :span="24">-->
+            <!--<ul class="i-list">-->
+              <!--<li>车牌号：{{orderDetail.carPlateNumber}}</li>-->
+              <!--<li>车辆报价：{{orderDetail.carMoney}}元</li>-->
+              <!--<li>-->
+                <!--<el-form :inline="true" :model="orderDetail" size="mini">-->
+                  <!--<el-form-item label="接单价" class="order-price">-->
+                    <!--<el-input v-model="orderDetail.carRealMoney" placeholder="请输入"></el-input>-->
+                  <!--</el-form-item>-->
+                <!--</el-form>-->
+              <!--</li>-->
+            <!--</ul>-->
+          <!--</el-col>-->
+        <!--</el-row>-->
+      <!--</div>-->
+      <!--<div class="block" style="text-align: left; padding: 15px">-->
+        <!--已接单任务-->
+      <!--</div>-->
+        <div class="header"> 已接单任务</div>
       <div class="block" style="text-align: left; padding: 15px">
         <el-table
                 size="mini"
@@ -138,6 +166,7 @@
         <el-button @click="orderDetailDialog = false" size="mini">取 消</el-button>
         <el-button type="primary" @click="onAssignConfirm" size="mini">确认车辆</el-button>
       </div>
+      </template>
     </el-dialog>
   </d2-container>
 </template>
@@ -145,6 +174,7 @@
 <script>
 import util from '@/libs/util';
 import {getRouterAliaList} from '@/api/schedule';
+import {getDriverBySearchKey,getDriverByPlateNumberSearchKey} from '@/api/truck';
 import {
   getCarTypeList,
   getOrderByCustomerNumId,
@@ -153,6 +183,7 @@ import {
   getDriverOrderDetail,
   getCarSizeList,
   cancelOrderStatus,
+  getOrderByDriverSeries
 } from '@/api/order';
 import {getOrderType} from '@/api/dictionary';
 
@@ -167,6 +198,8 @@ export default {
   data() {
     return {
       customerNumId: util.cookies.get('__user__customernumid'),
+      driverNames: [],
+      driverPlateNumber: [],
       searchItemPop: {
         appointmentDate: '',
         carPlateNumberSearchKey: '',
@@ -193,6 +226,7 @@ export default {
         size: 10,
         total: 0,
       },
+      form:{},
     };
   },
   created() {
@@ -206,6 +240,9 @@ export default {
       customerNumId: this.customerNumId,
     });
     this._getOrderTypeList({
+      customerNumId: this.customerNumId,
+    });
+    this._getDriverNameList({
       customerNumId: this.customerNumId,
     });
     this._initMyPage();
@@ -239,6 +276,54 @@ export default {
     _initMyPage() {
       this.handleSubmit();
     },
+      _getDriverNameList(params) {
+          getDriverBySearchKey(params)
+              .then(res => {
+                  if (res.code === 0) {
+                      let driverNames = [];
+                      res.customerDrivers.forEach(item => {
+                          driverNames.push({
+                              value: item.driverName,
+                              ...item,
+                          });
+                      });
+                      let driverPlatNames = [];
+                      res.customerDrivers.forEach(item => {
+                          driverPlatNames.push({
+                              value: item.carPlateNumber,
+                              ...item,
+                          });
+                      });
+                      this.driverNames = driverNames;
+                      this.driverPlateNumber = driverPlatNames;
+                  }
+              })
+              .catch(err => {
+                  console.log(err);
+              });
+      },
+      querySearchAsyncDriver(qs, cb) {
+          let driverNames = this.driverNames;
+          var results = qs
+              ? driverNames.filter(this.createStateFilterRouter(qs))
+              : driverNames;
+          cb(results);
+      },
+      querySearchAsyncDriverPlate(qs, cb) {
+          let driverPlateNumber = this.driverPlateNumber;
+          var results = qs
+              ? driverPlateNumber.filter(this.createStateFilterRouter(qs))
+              : driverPlateNumber;
+          cb(results);
+      },
+      createStateFilterRouter(qs) {
+          return state => {
+              return state.value.toLowerCase().indexOf(qs.toLowerCase()) != -1;
+          };
+      },
+      handleSelect(item) {
+
+      },
     _getCarTypeList(params) {
       getCarTypeList(params)
         .then(res => {
@@ -284,10 +369,6 @@ export default {
         });
     },
     handlePaginationChange(val) {
-      this.$notify({
-        title: '分页变化',
-        message: `当前第${val.current}页 共${val.total}条 每页${val.size}条`,
-      });
       this.page = val;
       // nextTick 只是为了优化示例中 notify 的显示
       this.$nextTick(() => {
@@ -296,8 +377,10 @@ export default {
     },
     handleSubmit(form) {
       this.loading = true;
+      this.form=form;
       getOrderByCustomerNumId({
         customerNumId: util.cookies.get('__user__customernumid'),
+        franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
         current: this.page.current,
         pageSize: this.page.size,
         deliverStatus: 0,
@@ -335,7 +418,7 @@ export default {
         .then(res => {
           if (res.code === 0) {
             this.$message.success('作废订单成功！');
-            this.handleSubmit();
+            this.handleSubmit(this.form);
           }
         })
         .catch(err => {
@@ -349,7 +432,7 @@ export default {
       this.searchItemPop.routerDetailSeries = param.routerDetailSeries;
       this.searchItemPop.series = param.series;
       // 加载全部数据
-      this.handleSubmit();
+      this.handleSubmit(this.form);
     },
     onSearchPop() {
       this._selectDriver({
@@ -385,16 +468,56 @@ export default {
     },
     onAssignConfirm() {
       if (this.orderDetail.carRealMoney <= this.orderDetail.carMoney) {
-        this._confirmDriver({
-          carRealMoney: this.orderDetail.carRealMoney,
-          customerNumId: this.customerNumId,
-          driverSeries: this.driverSeries,
-          orderSeries: this.searchItemPop.series,
-        });
+          this._getOrderByDriverSeries({
+              customerNumId: this.customerNumId,
+              driverSeries: this.driverSeries,
+              appointmentDate: this.searchItemPop.appointmentDate,
+          });
+        // this._confirmDriver({
+        //   carRealMoney: this.orderDetail.carRealMoney,
+        //   customerNumId: this.customerNumId,
+        //   driverSeries: this.driverSeries,
+        //   orderSeries: this.searchItemPop.series,
+        // });
       } else {
         this.$message.error('接单价必须不高于车辆报价！');
       }
     },
+      _getOrderByDriverSeries(params) {
+          getOrderByDriverSeries(params)
+              .then(res => {
+                  if (res.code === 0) {
+                      if(res.orderCount>0){
+                          this.$confirm('当前司机已经在线路'+res.routerAlia+'拥有订单,订单用车时间为'+res.appointmentDate+'是否继续派单?', '提示', {
+                              confirmButtonText: '确定',
+                              cancelButtonText: '取消',
+                              type: 'warning',
+                          }).then(() => {
+                              this._confirmDriver({
+                                  carRealMoney: this.orderDetail.carRealMoney,
+                                  customerNumId: this.customerNumId,
+                                  driverSeries: this.driverSeries,
+                                  orderSeries: this.searchItemPop.series,
+                                  appointmentDate: this.searchItemPop.appointmentDate,
+                                  routerDetailSeries: this.searchItemPop.routerDetailSeries,
+                              });
+                          });
+                      }else{
+                              this._confirmDriver({
+                                  carRealMoney: this.orderDetail.carRealMoney,
+                                  customerNumId: this.customerNumId,
+                                  driverSeries: this.driverSeries,
+                                  orderSeries: this.searchItemPop.series,
+                                  appointmentDate: this.searchItemPop.appointmentDate,
+                                  routerDetailSeries: this.searchItemPop.routerDetailSeries,
+                              });
+                      }
+                  }
+              })
+              .catch(err => {
+                  console.log(err);
+              });
+      },
     _confirmDriver(params) {
       confirmDriver(params)
         .then(res => {
@@ -405,7 +528,7 @@ export default {
             });
             this.addDialog = false;
             this.orderDetailDialog = false;
-            this.handleSubmit();
+            this.handleSubmit(this.form);
           }
         })
         .catch(err => {
@@ -426,3 +549,12 @@ export default {
   },
 };
 </script>
+<style lang="scss">
+  .header {
+    padding: 0 10px;
+    margin-bottom: 20px;
+    border-left: #2f74ff 2px solid;
+    background: #f6f6f6;
+    font-size: 16px;
+  }
+</style>

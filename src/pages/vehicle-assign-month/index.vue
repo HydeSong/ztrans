@@ -9,6 +9,7 @@
             :table-data="table"
             @deleteOrder="deleteOrder"
             @timeDetail="timeDetail"
+            @getTaskDetail="getTaskDetail"
             :loading="loading"/>
     <page-footer
             slot="footer"
@@ -159,6 +160,12 @@ export default {
         series: param.series,
       });
     },
+      getTaskDetail(param) {
+          this.$router.push({
+              path: '/order-month-detail',
+              query: {series: param.series},
+          });
+    },
       timeDetail(param){
         this.btn_group=[];
         var times=param.appointmentDates;
@@ -172,6 +179,15 @@ export default {
           this.dialogFormVisibleTask=true;
       },
       _deleteAllMonthOrder(params) {
+          this.$confirm(
+              '是否删除当前记录？',
+              '提示',
+              {
+                  confirmButtonText: '确定',
+                  cancelButtonText: '取消',
+                  type: 'warning',
+              }
+          ).then(() => {
           deleteAllMonthOrder(params)
               .then(res => {
                   if (res.code === 0) {
@@ -182,6 +198,7 @@ export default {
               .catch(err => {
                   console.log(err);
               });
+          });
       },
     selectCar(param) {
       this.addDialog = true;

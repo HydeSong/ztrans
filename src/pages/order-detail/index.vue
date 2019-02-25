@@ -6,7 +6,7 @@
         <el-form-item label="订单号" >
           <el-input v-model="order.series"></el-input>
         </el-form-item>
-        <el-form-item label="线路别名" >
+        <el-form-item label="线路名称" >
           <el-input v-model="order.routerAlisa"></el-input>
         </el-form-item>
         <el-form-item label="需要搬卸" >
@@ -21,7 +21,7 @@
         <el-form-item label="订单状态" >
           <el-input v-model="order.deliverStatus"></el-input>
         </el-form-item>
-        <el-form-item label="订单结算状态" >
+        <el-form-item label="订单对账状态" >
           <el-input v-model="order.orderBalanceStatus"></el-input>
         </el-form-item>
         <el-form-item label="订单类型" >
@@ -35,6 +35,13 @@
         </el-form-item>
         <el-form-item label="订单车辆吨位" >
           <el-input v-model="order.carWeightName"></el-input>
+        </el-form-item>
+        <el-form-item  v-if='showCustomer'>
+          <el-button
+                  type="primary"
+                  @click="getAllMonthDetail">
+            查看整月任务明细
+          </el-button>
         </el-form-item>
 
       </el-form>
@@ -168,6 +175,9 @@ export default {
       customerNumId: util.cookies.get('__user__customernumid'),
       ao:'',
       orderId: '',
+      commondOrderStatus: '',
+      allmonthOrderTaskSeries: '',
+      showCustomer:true,
       order: {
         series: '',
         routerAlisa: '',
@@ -218,6 +228,11 @@ export default {
 
   created() {
     this.orderId = this.$route.query.orderId;
+    this.commondOrderStatus=this.$route.query.commondOrderStatus;
+    this.allmonthOrderTaskSeries=this.$route.query.allmonthOrderTaskSeries;
+    if(this.commondOrderStatus=='0'){
+        this.showCustomer=false;
+    }
     if (!this.orderId == '') {
       this.getOrder();
       this._getOrderDetailBySeries({
@@ -228,6 +243,12 @@ export default {
   },
   watch: {},
   methods: {
+    getAllMonthDetail(){
+        this.$router.push({
+            path: '/order-month-detail',
+            query: {series: this.allmonthOrderTaskSeries},
+        });
+    },
     getOrder() {
       this._getOrderDetailBySeries({
         customerNumId: this.customerNumId,

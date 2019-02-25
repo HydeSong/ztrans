@@ -53,18 +53,8 @@
         <el-form-item label="收货地(省/市/区/县/)">
           <el-input v-model="destinationLocalction" disabled style="width: 500px;"></el-input>
         </el-form-item>
-        <el-form-item label="车型">
-        <el-select v-model="createOrder.carTypeSeries" placeholder="请选择车型">
-          <el-option v-for="(item, index) in carTypes" :key="item.typeId" :label="item.typeName" :value="item.typeId"></el-option>
-        </el-select>
-        </el-form-item>
-        <el-form-item label="车长">
-          <el-select v-model="createOrder.carSizeSeries" placeholder="请选择车长">
-            <el-option v-for="(item, index) in carSizes" :key="item.sizeId" :label="item.sizeName" :value="item.sizeId"></el-option>
-          </el-select>
-        </el-form-item>
         <el-form-item label="吨位">
-          <el-select v-model="carWeight" placeholder="请选择车型和车长">
+          <el-select v-model="carWeight" placeholder="请选择吨位">
             <el-option
                     v-for="item in carDetailModels"
                     :key="item.weightName"
@@ -73,6 +63,17 @@
             </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="车型">
+        <el-select v-model="createOrder.carTypeSeries" disabled placeholder="">
+          <el-option v-for="(item, index) in carTypes" :key="item.typeId" :label="item.typeName" :value="item.typeId"></el-option>
+        </el-select>
+        </el-form-item>
+        <el-form-item label="车长">
+          <el-select v-model="createOrder.carSizeSeries" disabled placeholder="">
+            <el-option v-for="(item, index) in carSizes" :key="item.sizeId" :label="item.sizeName" :value="item.sizeId"></el-option>
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="路径站点个数">
           <el-input v-model="createOrder.sendGoodsLocationNum" placeholder="路径站点个数" style="width: 500px;"></el-input>
         </el-form-item>
@@ -109,6 +110,7 @@ import {
   getCustomerRouterDetail,
   getPriceAndCarByCustomerIdAndRouterSeries,
   createOrderByWeb,
+  getOrderByRouterAndDate
 } from '@/api/createorder';
 
 import {getCarTypeList} from '@/api/order';
@@ -122,6 +124,7 @@ export default {
       searching: false,
       value5: '',
       customerNumId: util.cookies.get('__user__customernumid'),
+      franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
       franchiseeId: '',
       currentPage: 1,
       pageSize: 200,
@@ -158,6 +161,7 @@ export default {
         carSizeSeries: '',
         carWeightSeries:'',
         customerNumId: util.cookies.get('__user__customernumid'),
+        franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
         customerMasterId: '',
         wetherSpecialCustomerPrice: '',
         routerDetailSeries: '',
@@ -183,6 +187,7 @@ export default {
       masterCustomerSearchKey: {
         customerMasterSearchKey: '',
         customerNumId: '',
+        franchiseeSeries:'',
       },
       tableData: [],
       customerSales: [],
@@ -197,6 +202,7 @@ export default {
   created() {
     this._getMasterCustomerListBySearchKey({
       customerNumId: this.customerNumId,
+      franchiseeSeries: this.franchiseeSeries
     });
       this._getCarTypeList({
           customerNumId: this.customerNumId,
@@ -204,7 +210,6 @@ export default {
       this._getCarSizeList({
           customerNumId: this.customerNumId,
       });
-    this.createOrder.appointmentDate=this.dateFormatter(new Date());
   },
   watch: {
     'createOrder.customerMasterId'() {
@@ -258,8 +263,31 @@ export default {
             this.carDetailModels[i].initDistance +
             '公里';
           this.overPrice = this.carDetailModels[i].overstepPrice + '元/公里';
+          this.createOrder.carTypeSeries=this.carDetailModels[i].carTypeName;
+          this.createOrder.carSizeSeries=this.carDetailModels[i].carSizeName;
         }
       }
+    },
+      'routerAlial' (){
+      var re = /^[0-9]+.?[0-9]*$/;
+          var time="";
+          if(this.routerAlial.length>4){
+              //截取后四位
+              if(re.test(this.routerAlial.substring(this.routerAlial.length-4,this.routerAlial.length))){
+                  time=this.routerAlial.substring(this.routerAlial.length-4,this.routerAlial.length);
+              }else if(this.routerAlial.indexOf("（") != -1&&re.test(this.routerAlial.substring(this.routerAlial.indexOf("（")-4,this.routerAlial.indexOf("（")))){
+                  time=this.routerAlial.substring(this.routerAlial.indexOf("（")-4,this.routerAlial.indexOf("（"));
+              }
+          }
+          var  thisTime=new Date();
+          if(this.createOrder.appointmentDate!=null&&this.createOrder.appointmentDate!=''){
+              thisTime=this.createOrder.appointmentDate;
+          }
+          if(time!=""){
+              this.createOrder.appointmentDate=this.dateFormatterNewHourAndMinute(thisTime,time);
+          }else{
+              this.createOrder.appointmentDate=this.dateFormatter(thisTime);
+          }
     },
   },
   methods: {
@@ -273,9 +301,20 @@ export default {
     var second = d.getSeconds()<10 ? '0'+d.getSeconds() : d.getSeconds();
     return [year, month, day].join('-') + " " + [hour, minute, second].join(':');
 },
+      dateFormatterNewHourAndMinute(str,time){
+          var d = new Date(str);
+          var year = d.getFullYear();
+          var month = (d.getMonth()+1)<10 ? '0'+(d.getMonth()+1) : (d.getMonth()+1);
+          var day = d.getDate()<10 ? '0'+d.getDate() : d.getDate();
+          var hour = time.substring(0,2);
+          var minute = time.substring(2,4);
+          var second = d.getSeconds()<10 ? '0'+d.getSeconds() : d.getSeconds();
+          return [year, month, day].join('-') + " " + [hour, minute, second].join(':');
+      },
     querySearchAsync(qs, cb) {
       this.masterCustomerSearchKey.customerMasterSearchKey = qs;
       this.masterCustomerSearchKey.customerNumId = this.customerNumId;
+      this.masterCustomerSearchKey.franchiseeSeries = this.franchiseeSeries;
       getMasterCustomerListBySearchKey(this.masterCustomerSearchKey).then(
         res => {
           if (res.code === 0) {
@@ -306,9 +345,6 @@ export default {
       this.createOrder.customerMasterId = item.customerMasterId;
     },
     querySearchAsyncRouter(qs, cb) {
-      if(qs=''){
-          return;
-      }
       let routerDetails = this.routerDetails;
       var results = qs
         ? routerDetails.filter(this.createStateFilterRouter(qs))
@@ -369,10 +405,6 @@ export default {
               .then(res => {
                   if (res.code === 0) {
                       this.carSizes = res.carSizes;
-                      if(this.createOrder.carSizeSeries==null||this.createOrder.carSizeSeries==''){
-                          this.createOrder.carSizeSeries=this.carSizes[0].sizeId;
-                      }
-
                   }
               })
               .catch(err => {
@@ -384,9 +416,6 @@ export default {
               .then(res => {
                   if (res.code === 0) {
                       this.carTypes = res.carTypes;
-                      if(this.createOrder.carTypeSeries==null||this.createOrder.carTypeSeries==''){
-                          this.createOrder.carTypeSeries=this.carTypes[0].typeId;
-                      }
                   }
               })
               .catch(err => {
@@ -553,24 +582,72 @@ export default {
         this.searching = false;
         return;
       }
-      this.$confirm('是否确定下单?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(() => {
-        createOrderByWeb(this.createOrder)
-          .then(res => {
-            if (res.code === 0) {
-              this.$message.success('创建手工单成功！');
-            }
-          })
-          .catch(err => {
-            console.log(err);
-          });
-      });
+        this._getOrderByRouterAndDate({
+            customerNumId: this.customerNumId,
+            customerMasterId: this.createOrder.customerMasterId,
+            routerDetailSeries: this.createOrder.routerDetailSeries,
+            appointmentDate: this.createOrder.appointmentDate,
+        });
+      // this.$confirm('是否确定下单?', '提示', {
+      //   confirmButtonText: '确定',
+      //   cancelButtonText: '取消',
+      //   type: 'warning',
+      // }).then(() => {
+      //   createOrderByWeb(this.createOrder)
+      //     .then(res => {
+      //       if (res.code === 0) {
+      //         this.$message.success('创建手工单成功！');
+      //       }
+      //     })
+      //     .catch(err => {
+      //       console.log(err);
+      //     });
+      // });
       this.searching = false;
     },
-
+      _getOrderByRouterAndDate(params) {
+          getOrderByRouterAndDate(params)
+              .then(res => {
+                  if (res.code === 0) {
+                      if(res.orderCount>0){
+                          this.$confirm(res.createOrderName+'已经下过当前线路订单,订单用车时间为'+res.date+',订单号为'+res.series+',是否继续下单?', '提示', {
+                              confirmButtonText: '确定',
+                              cancelButtonText: '取消',
+                              type: 'warning',
+                          }).then(() => {
+                              createOrderByWeb(this.createOrder)
+                                  .then(res => {
+                                      if (res.code === 0) {
+                                          this.$message.success('创建手工单成功！');
+                                      }
+                                  })
+                                  .catch(err => {
+                                      console.log(err);
+                                  });
+                          });
+                      }else{
+                          this.$confirm('是否确定下单?', '提示', {
+                              confirmButtonText: '确定',
+                              cancelButtonText: '取消',
+                              type: 'warning',
+                          }).then(() => {
+                              createOrderByWeb(this.createOrder)
+                                  .then(res => {
+                                      if (res.code === 0) {
+                                          this.$message.success('创建手工单成功！');
+                                      }
+                                  })
+                                  .catch(err => {
+                                      console.log(err);
+                                  });
+                          });
+                      }
+                  }
+              })
+              .catch(err => {
+                  console.log(err);
+              });
+      },
     cancelSign() {
       this.$confirm('是否清除此页下单数据?', '提示', {
         confirmButtonText: '确定',
