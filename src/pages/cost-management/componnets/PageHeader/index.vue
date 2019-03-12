@@ -177,12 +177,14 @@ export default {
           customerNumId: this.customerNumId,
           customerSeries: '',
           routerSearchKey: '',
+          franchiseeSeries:this.franchiseeSeries
       });
       this._getOrderBalanceStatusList({
           customerNumId: this.customerNumId,
       });
       this._getDriverNameList({
           customerNumId: this.form.customerNumId,
+          franchiseeSeries:this.franchiseeSeries
       });
   },
     watch: {

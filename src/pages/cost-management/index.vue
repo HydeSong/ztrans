@@ -35,6 +35,9 @@ export default {
     return {
       table: [],
       orderInfos: [],
+      tableSeries: [],
+      customerNumId: util.cookies.get('__user__customernumid'),
+      franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
       loading: false,
       form: { },
       page: {
@@ -67,7 +70,8 @@ export default {
           this.loading = true;
           this.form=form;
           getOrderPriceList({
-              customerNumId: util.cookies.get('__user__customernumid'),
+              customerNumId: this.customerNumId,
+              franchiseeSeries: this.franchiseeSeries,
               current: this.page.current,
               pageSize: this.page.size,
               status:this.$route.params.status,
@@ -87,7 +91,9 @@ export default {
               });
       },
       orderInfoss(param) {
-          this.orderInfos=param.orderInfos;
+          for(var i of param.orderInfos) {
+              this.orderInfos.push(i.series);
+          };
       },
       calculate(param){
           this.$confirm("此操作将更改订单结算状态, 是否继续?", "提示", {
@@ -97,7 +103,7 @@ export default {
           })
               .then(() => {
           updateOrderFeeByHasCalculate({
-              customerNumId: util.cookies.get('__user__customernumid'),
+              customerNumId:this.customerNumId,
               orderInfos:this.orderInfos
           })
               .then(res => {
@@ -117,7 +123,7 @@ export default {
      downLoadExcel(form) {
       this.loading = true;
       var url=exportOrderPrice({
-        customerNumId: util.cookies.get('__user__customernumid'),
+        customerNumId: this.customerNumId,
         status:this.$route.params.status,
         ...form,
       });

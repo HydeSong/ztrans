@@ -86,8 +86,11 @@ export default {
         customerJobModels: [],
         baseCustomers:[],
         baseCustomersJobNum:[],
+        customerNumId: util.cookies.get('__user__customernumid'),
+        franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
       form: {
         customerNumId: util.cookies.get('__user__customernumid'),
+        franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
         employeeNameSearchKey: '',
         employeeJobNumSearchKey: '',
         jobId: ''
@@ -103,6 +106,7 @@ export default {
           customerNumId: this.customerNumId,
           jobId: '',
           employeeNameSearchKey: '',
+          franchiseeSeries:this.franchiseeSeries,
       });
   },
   methods: {

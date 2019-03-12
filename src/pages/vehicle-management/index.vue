@@ -105,6 +105,11 @@
             <el-option v-for="(item, index) in carSizes" :key="index" :label="item.sizeName" :value="item.sizeId"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="车队加盟商">
+          <el-select v-model="addCarItem.franchiseeSeries">
+            <el-option v-for="(item, index) in franchiseeNameList" :key="index" :label="item.franchiseeName" :value="item.franchiseeId"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="所属车队">
           <el-select v-model="addCarItem.motorcadeId" clearable>
             <el-option v-for="(item, index) in motorcadeNameList" :key="index" :label="item.motorcadeCar" :value="item.motorcadeId"></el-option>
@@ -270,6 +275,11 @@
             <el-option v-for="(item, index) in carSizes" :key="index" :label="item.sizeName" :value="item.sizeId"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="车队加盟商">
+          <el-select v-model="addCarItem.franchiseeSeries" disabled>
+            <el-option v-for="(item, index) in franchiseeNameList" :key="index" :label="item.franchiseeName" :value="item.franchiseeId"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="所属车队">
           <el-select v-model="addCarItem.motorcadeId" clearable>
             <el-option v-for="(item, index) in motorcadeNameList" :key="index" :label="item.motorcadeCar" :value="item.motorcadeId"></el-option>
@@ -411,6 +421,9 @@ import util from '@/libs/util';
 import {getRouterAliaList} from '@/api/schedule';
 import {getCarTypeList} from '@/api/order';
 import {
+    getFranchiseeNameList
+} from "@/api/franchisee";
+import {
   getAllCar,
   deleteCar,
   getMotorcadeList,
@@ -502,7 +515,9 @@ export default {
         motorcadeId: '',
         persomCarPicture: '',
         prvName: '',
+        franchiseeSeries:''
       },
+      franchiseeNameList:[],
       editCarPopDialog: false,
       addCarPopDialog: false,
       checkIdAndCheckStatus: [],
@@ -520,6 +535,7 @@ export default {
       carDetail: {},
       dialogImageUrl: '',
       customerNumId: util.cookies.get('__user__customernumid'),
+      franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
       carDetail: {},
       dialogVisible:false,
       page: {
@@ -544,9 +560,6 @@ export default {
     this._getActiveStatus({
       customerNumId: this.customerNumId,
     });
-    this._getMotorcadeList({
-      franchiseeid: '',
-    });
     this._getAllCarBand({
       current: 1,
       pageSize: 200,
@@ -569,6 +582,10 @@ export default {
       customerNumId: this.customerNumId,
       pageSize: 200,
     });
+      this._getFranchiseeNameList({
+          customerNumId: this.customerNumId,
+          franchiseeType:1
+      });
   },
   watch: {
     'addCarItem.prvName'() {
@@ -588,11 +605,31 @@ export default {
         cityId: this.addCarItem.cityName,
       });
     },
+      'addCarItem.franchiseeSeries'() {
+          if(this.addCarItem.franchiseeSeries!=0&&(this.addCarItem.franchiseeSeries==null||this.addCarItem.franchiseeSeries=='')){
+              return;
+          }
+          this.addCarItem.motorcadeId='';
+          this._getMotorcadeList({
+              franchiseeid: this.addCarItem.franchiseeSeries,
+          });
+      },
   },
   methods: {
     _initMyPage() {
       this.handleSubmit();
     },
+      _getFranchiseeNameList(params) {
+          getFranchiseeNameList(params)
+              .then(res => {
+                  if (res.code === 0) {
+                      this.franchiseeNameList = res.franchiseeNameList;
+                  }
+              })
+              .catch(err => {
+                  console.log(err);
+              });
+      },
     handlePaginationChange(val) {
       this.page = val;
       // nextTick 只是为了优化示例中 notify 的显示
@@ -604,6 +641,7 @@ export default {
       this.loading = true;
       this._getAllCar({
         customerNumId: this.customerNumId,
+        franchiseeSeries:this.franchiseeSeries,
         current: this.page.current,
         pageSize: this.page.size,
         ...form,
@@ -907,6 +945,13 @@ export default {
         });
         return;
       }
+        if (params.franchiseeSeries === '') {
+            this.$message({
+                type: 'error',
+                message: '加盟商不可以为空！',
+            });
+            return;
+        }
       addCar(params)
         .then(res => {
           if (res.code === 0) {

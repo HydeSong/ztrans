@@ -230,6 +230,7 @@ export default {
           customerNumId: this.customerNumId,
           customerSeries: '',
           routerSearchKey: '',
+          franchiseeSeries:this.franchiseeSeries
       });
     this._getCarTypeList({
       customerNumId: this.form.customerNumId,
@@ -242,6 +243,7 @@ export default {
     });
     this._getDriverNameList({
       customerNumId: this.form.customerNumId,
+      franchiseeSeries:this.franchiseeSeries
     });
 
   },

@@ -38,7 +38,7 @@
             <el-option v-for="(item, index) in customerSexModels" :key="index" :label="item.customerSexName" :value="item.customerSexCode"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="销售加盟商">
+        <el-form-item label="加盟商">
           <el-select v-model="addCustomerModel.franchiseeSeries" clearable>
             <el-option v-for="(item, index) in franchiseeNameList" :key="index" :label="item.franchiseeName" :value="item.franchiseeId"></el-option>
           </el-select>
@@ -123,6 +123,7 @@ export default {
       table: [],
       loading: false,
       customerNumId: util.cookies.get('__user__customernumid'),
+      franchiseeSeries:util.cookies.get('__user__franchiseeSeries'),
       addCustomerePopDialog: false,
       passwordUpdatePopDialog: false,
       addCustomerModel: {
@@ -305,6 +306,7 @@ export default {
               customerNumId: util.cookies.get('__user__customernumid'),
               current: this.page.current,
               pageSize: this.page.size,
+              franchiseeSeries:this.franchiseeSeries,
               ...form,
           })
               .then(res => {
